@@ -1,4 +1,5 @@
 const express = require('express')
+// const ObjectID = require('mongodb').ObjectID;
 const app = express()
 const  cors = require('cors');
 require('dotenv').config()
@@ -20,7 +21,25 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
-  const collection = client.db("barber").collection("order");
+  const serviceCollection = client.db("barber").collection("order");
+
+    app.post('/addServices', (req, res) => {
+      const service = req.body
+      console.log(service)
+      serviceCollection.insertOne(service)
+      .then(result => {
+        console.log(result.insertedCount > 0)
+        res.send(result.insertedCount > 0)
+      })
+
+    })
+
+    app.get('/services', (req, res) => {
+      serviceCollection.find({id: req.params.id})
+      .toArray((err, documents) => {
+        res.send(documents)
+      })
+    })
   console.log('database connected successfully')
 });
 
