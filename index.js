@@ -22,7 +22,10 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
   const serviceCollection = client.db("barber").collection("order");
+  const orderedCollection = client.db("barber").collection("ordered");
+  const reviewCollection = client.db("barber").collection("review");
 
+  // service data uploaded to the "serviceCollection" database
     app.post('/addServices', (req, res) => {
       const service = req.body
       console.log(service)
@@ -34,12 +37,58 @@ client.connect(err => {
 
     })
 
+    // order submitted to the "orderedCollection" database
+    app.post('/itemOrdered',(req, res) => {
+      const item = req.body;
+      console.log(item)
+      orderedCollection.insertOne(item)
+      .then(result => {
+        console.log(result.insertedCount > 0)
+        res.send(result.insertedCount > 0)
+      })
+    })
+    // All service data showing to the UI
     app.get('/services', (req, res) => {
-      serviceCollection.find({id: req.params.id})
+      serviceCollection.find({id: req.params._id})
       .toArray((err, documents) => {
         res.send(documents)
       })
     })
+
+    app.get('/book', (req, res) => {
+      serviceCollection.find()
+      .toArray((err, documents) => {
+        res.send(documents)
+      })
+    })
+
+    //ordered service showing to the order page
+    app.get('/ordered',(req, res) => {
+      orderedCollection.find()
+      .toArray((err, documents) => {
+        res.send(documents)
+      })
+  })
+
+  ////review data adding to the database
+  app.post('/review', (req, res) => {
+    const addReview = req.body;
+    reviewCollection.insertOne(addReview)
+    .then(result=>{
+      console.log(result.insertedCount > 0)
+      res.send(result.insertedCount > 0)
+    })
+  })
+
+  // review showing to the UI
+  app.get('/reviews', (req, res) => {
+    reviewCollection.find({id: req.params._id})
+    .toArray((err, document)=>{
+      res.send(document)
+    })
+  })
+
+  ///checking database connection by this console
   console.log('database connected successfully')
 });
 
