@@ -1,5 +1,5 @@
 const express = require('express')
-// const ObjectID = require('mongodb').ObjectID;
+const ObjectID = require('mongodb').ObjectID;
 const app = express()
 const  cors = require('cors');
 require('dotenv').config()
@@ -24,6 +24,7 @@ client.connect(err => {
   const serviceCollection = client.db("barber").collection("order");
   const orderedCollection = client.db("barber").collection("ordered");
   const reviewCollection = client.db("barber").collection("review");
+  const adminCollection = client.db("barber").collection("admin");
 
   // service data uploaded to the "serviceCollection" database
     app.post('/addServices', (req, res) => {
@@ -64,7 +65,7 @@ client.connect(err => {
 
     //ordered service showing to the order page
     app.get('/ordered',(req, res) => {
-      orderedCollection.find()
+      orderedCollection.find({email: req.query.email})
       .toArray((err, documents) => {
         res.send(documents)
       })
@@ -88,6 +89,40 @@ client.connect(err => {
     })
   })
 
+  //Adding ADMIN to the database
+  app.post('/admin', (req, res)=>{
+    const addAdmin = req.body
+    adminCollection.insertOne(addAdmin)
+    .then(result =>{
+      console.log(result.insertedCount > 0)
+      res.send(result.insertedCount > 0)
+    })
+  })
+  ///show admin to the UI
+  app.get('/showAdmin', (req, res) => {
+    adminCollection.find({id: req.params._id})
+    .toArray((err, documents) =>{
+      res.send(documents)
+    })
+  })
+  // admin
+  app.post('/isAdmin', (req, res) => {
+    const email = req.body.email;
+    adminCollection.find({ email: email })
+        .toArray((err, admin) => {
+            res.send(admin.length > 0);
+        })
+})
+
+  // manage inventory 
+  app.delete('/deleteItems/:id', (req, res)=>{
+    const id = ObjectID(req.params.id);
+    serviceCollection.findOneAndDelete({_id: id})
+    .then((err, result)=>{
+      console.log(result)
+      result.deletedCount > 0
+    })
+  })
   ///checking database connection by this console
   console.log('database connected successfully')
 });
